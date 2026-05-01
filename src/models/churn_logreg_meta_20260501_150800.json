@@ -1,0 +1,11 @@
+{
+    "model_name": "churn_logreg_best_20260501_150800.pkl",
+    "best_params": {
+        "classifier__C": 1,
+        "classifier__class_weight": "balanced",
+        "classifier__penalty": "l2",
+        "classifier__solver": "liblinear"
+    },
+    "best_cv_f1": 0.6343,
+    "saved_at": "20260501_150800"
+}
