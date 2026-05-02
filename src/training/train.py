@@ -9,33 +9,6 @@ import joblib
 from datetime import datetime
 import json
 
-file_path = "./data/Telco_Customer_Churn.csv"
-
-
-def load_data(file_path):
-    df = pd.read_csv(file_path)
-    df = df.ffill()
-    df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
-    return df
-
-def preprocess_data(df:pd.DataFrame):
-    X = df.drop("Churn",axis=1)
-    y = df["Churn"].map({"Yes":1, "No":0})
-
-    numeric_features = X.select_dtypes(include=["int64", "float64"]).columns
-    categorical_features = X.select_dtypes(include=["object"]).columns
-
-    numeric_transformer = StandardScaler()
-    categorical_transformer = OneHotEncoder(handle_unknown="ignore")
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num",numeric_transformer,numeric_features),
-            ("cat",categorical_transformer,categorical_features)
-        ]
-    )
-    return X,y,preprocessor
-
 def save_model_and_parameters(grid_search):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_name = f"churn_logreg_best_{timestamp}.pkl"
