@@ -8,6 +8,12 @@ from sklearn.metrics import classification_report
 import joblib
 from datetime import datetime
 import json
+import mlflow
+import mlflow.sklearn
+from src.data import load_data
+from src.features import preprocess_data
+
+file_path = "data/Telco_Customer_Churn.csv"
 
 def save_model_and_parameters(grid_search):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -40,22 +46,23 @@ def train():
         X, y, test_size=0.2, random_state=42
     )
 
-    model = Pipeline(
-        steps=[
-            ("preprocessor", preprocessor),
-            ("classifier", LogisticRegression(max_iter=1000)),
-        ]
-    )
+    pipeline = Pipeline(
+            steps=[
+                ("preprocessor", preprocessor),
+                ("classifier", LogisticRegression(max_iter=1000)),
+            ]
+        )
+
 
     param_grid = {
-    "classifier__C": [0.01, 0.1, 1, 10, 100],          # regularisation strength
-    "classifier__penalty": ["l1", "l2"],                 # regularisation type
-    "classifier__solver": ["liblinear", "saga"],         # solvers that support l1+l2
-    "classifier__class_weight": [None, "balanced"],      # handles churn class imbalance
-    }
+        "classifier__C": [0.01, 0.1, 1, 10, 100],          # regularisation strength
+        "classifier__penalty": ["l1", "l2"],                 # regularisation type
+        "classifier__solver": ["liblinear", "saga"],         # solvers that support l1+l2
+        "classifier__class_weight": [None, "balanced"],      # handles churn class imbalance
+        }
 
     grid_search = GridSearchCV(
-    estimator=model,
+    estimator=pipeline,
     param_grid=param_grid,
     scoring="f1",           # F1 on positive class (Churn = 1)
     cv=5,                   # 5-fold stratified cross-validation
@@ -65,21 +72,33 @@ def train():
     return_train_score=True # lets you check for overfitting later
     )
 
-    
-    grid_search.fit(X_train, y_train)
 
-    print("Best F1 Score (CV):", round(grid_search.best_score_, 4))
-    print("Best Params:       ", grid_search.best_params_)
+    with mlflow.start_run():
+        grid_search.fit(X_train, y_train)
+        best_model = grid_search.best_estimator_
+        y_pred = best_model.predict(X_test)
+        report = classification_report(y_test, y_pred, output_dict=True)
 
+        # 🔹 Log best params
+        mlflow.log_params(grid_search.best_params_)
 
-    best_model = grid_search.best_estimator_
-    y_pred = best_model.predict(X_test)
+        # 🔹 Log metrics
+        mlflow.log_metric("precision", report["1"]["precision"])
+        mlflow.log_metric("recall", report["1"]["recall"])
+        mlflow.log_metric("f1_score", report["1"]["f1-score"])
 
-    print("\nClassification Report:")
-    print(classification_report(y_test, y_pred, target_names=["No Churn", "Churn"]))
+        # 🔹 Log CV score
+        mlflow.log_metric("cv_best_score", grid_search.best_score_)
 
-    # Saving best model to models folder
-    save_model_and_parameters(grid_search)
+        # 🔹 Log model
+        mlflow.sklearn.log_model(best_model, "model")
+
+        print("Best Params:", grid_search.best_params_)
+        print(classification_report(y_test, y_pred))
+
+        
+        # Saving best model to models folder
+        save_model_and_parameters(grid_search)
 
 if __name__ == "__main__":
     train()
