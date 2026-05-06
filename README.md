@@ -1,4 +1,4 @@
-#ML Churn Prediction with MLOps
+ML Churn Prediction with MLOps
 
 Problem Statement :- 
 Predict whether a customer will churn based on historical data.
@@ -21,3 +21,25 @@ Key Insights from EDA :-
 5. Churned customers have much lower tenure (avg ~18 months vs ~38 for retained) (Also indicated by negative correlation between Tenure and Churn feature)
 6. Churned customers pay higher monthly charges on average
 7. TotalCharges is lower for churned (short tenure × high monthly)
+
+Project Architecture is as follows :- 
+Data → Preprocessing → Model → MLflow → Saved Artifact → FastAPI → Docker
+
+How to run :- 
+docker build -t churn-api .
+docker run -p 8000:8000 churn-api
+
+API Usage :- 
+POST /predict
+
+Tech Stack :- 
+Python
+Scikit-learn
+MLflow
+FastAPI
+Docker
+
+Future Improvements:
+- Add model monitoring
+- Add CI/CD pipeline
+- Add cloud deployment
