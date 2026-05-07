@@ -34,6 +34,13 @@ def root():
     logger.info("Root Endpoint called")
     return {"message": "Churn Prediction is running"}
 
+@app.get("/health")
+def health_check():
+    return {
+        "status" : "healthy",
+        "model_loaded": True
+    }
+
 @app.post("/predict")
 def predict_churn(request: ChurnRequest):
     try:
